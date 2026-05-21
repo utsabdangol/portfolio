@@ -1,0 +1,29 @@
+---
+const { skills } = Astro.props;
+---
+
+<section id="skills" class="px-6 md:px-12 py-32 border-t border-border">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="fade-up mb-16">
+      <span class="font-mono text-xs text-accent tracking-[0.2em] uppercase">skills</span>
+      <h2 class="font-display font-semibold text-3xl text-text mt-2">Tech stack</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
+      {skills.map((group: any, i: number) => (
+        <div class="fade-up bg-bg p-8" style={`transition-delay: ${i * 60}ms`}>
+          <p class="font-mono text-xs text-accent uppercase tracking-widest mb-5">{group.category}</p>
+          <div class="flex flex-wrap gap-2">
+            {group.items.map((item: string) => (
+              <span class="text-sm text-text/70 px-3 py-1.5 bg-surface border border-border rounded-lg hover:border-muted hover:text-text transition-colors cursor-default">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</section>

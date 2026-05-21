@@ -1,0 +1,36 @@
+{
+  "bio": "Computer Application student at Prime College, Kathmandu. Building data pipelines, ML models, and things that matter. Currently looking for data engineering internships.",
+  "shortBio": "Data Engineering student. Builder.",
+  "email": "utsabdangol21@gmail.com",
+  "linkedin": "https://linkedin.com/in/utsab-dangol",
+  "github": "https://github.com/utsabdangol",
+  "projects": [
+    {
+      "title": "nepse-pipeline",
+      "description": "End-to-end data pipeline for Nepal Stock Exchange. Web scraping, PostgreSQL, dbt medallion architecture (bronze/silver/gold), Airflow orchestration, and XGBoost price prediction tracked with MLflow.",
+      "tags": ["Python", "dbt", "Airflow", "PostgreSQL", "MLflow", "XGBoost"],
+      "url": "https://github.com/utsabdangol/nepse-pipeline",
+      "featured": true
+    },
+    {
+      "title": "OWO",
+      "description": "E-commerce platform for a minimal clothing brand. Laravel/PHP backend, Tailwind CSS, MySQL, and Khalti sandbox payment integration.",
+      "tags": ["Laravel", "PHP", "MySQL", "Tailwind", "Khalti"],
+      "url": "https://github.com/utsabdangol/owo",
+      "featured": true
+    },
+    {
+      "title": "Interconnected",
+      "description": "Social platform built with TypeScript and React. Focus on clean architecture and real-time interactions.",
+      "tags": ["TypeScript", "React"],
+      "url": "https://github.com/utsabdangol/interconnected",
+      "featured": false
+    }
+  ],
+  "skills": [
+    { "category": "Data Engineering", "items": ["Python", "PostgreSQL", "dbt", "Apache Airflow", "Docker", "ETL/ELT"] },
+    { "category": "ML & Analytics", "items": ["scikit-learn", "XGBoost", "MLflow", "Pandas", "Matplotlib"] },
+    { "category": "Web", "items": ["React", "TypeScript", "Laravel", "Tailwind CSS"] },
+    { "category": "Tools", "items": ["Git", "Linux", "Jupyter"] }
+  ]
+}

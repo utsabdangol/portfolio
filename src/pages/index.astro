@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Projects from '../components/Projects.astro';
+import Skills from '../components/Skills.astro';
+import Contact from '../components/Contact.astro';
+import content from '../content.json';
+---
+
+<Base title="Utsab Dangol — Data Engineering">
+  <Nav />
+  <Hero shortBio={content.shortBio} />
+  <About bio={content.bio} />
+  <Projects projects={content.projects} />
+  <Skills skills={content.skills} />
+  <Contact email={content.email} linkedin={content.linkedin} github={content.github} />
+</Base>

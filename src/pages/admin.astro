@@ -1,0 +1,290 @@
+---
+// Admin page - client rendered only
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Utsab Dangol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #e8e8e8; font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 2rem; }
+    #root { max-width: 800px; margin: 0 auto; }
+
+    .label { font-family: 'DM Mono', monospace; font-size: 11px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 0.15em; display: block; margin-bottom: 6px; }
+    input, textarea { width: 100%; background: #111; border: 1px solid #1f1f1f; border-radius: 8px; padding: 10px 14px; color: #e8e8e8; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    input:focus, textarea:focus { border-color: #3a3a3a; }
+    textarea { resize: vertical; min-height: 80px; }
+    button { cursor: pointer; font-family: 'DM Mono', monospace; font-size: 13px; border: none; border-radius: 6px; padding: 10px 20px; transition: all 0.2s; }
+    .btn-primary { background: #e8ff6b; color: #0a0a0a; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-danger { background: transparent; border: 1px solid #3a3a3a; color: #6b6b6b; }
+    .btn-danger:hover { border-color: #e8e8e8; color: #e8e8e8; }
+    .card { background: #111; border: 1px solid #1f1f1f; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    .tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px; color: #6b6b6b; background: #0a0a0a; border: 1px solid #1f1f1f; border-radius: 99px; padding: 2px 10px; margin: 2px; }
+    .status { font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px 14px; border-radius: 6px; margin-top: 12px; }
+    .status.success { background: #0d2012; color: #4ade80; border: 1px solid #166534; }
+    .status.error { background: #1c0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+    .status.loading { background: #111; color: #6b6b6b; border: 1px solid #1f1f1f; }
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+    h2 { font-size: 16px; font-weight: 500; margin-bottom: 16px; color: #e8e8e8; }
+    .section { margin-bottom: 40px; }
+    .row { display: flex; gap: 12px; align-items: flex-end; }
+    .flex-1 { flex: 1; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="module">
+    // ─── CONFIG ───────────────────────────────────────────────
+    // Set these as Cloudflare Pages environment variables:
+    // ADMIN_PASSWORD  — your chosen password
+    // GITHUB_TOKEN    — Personal Access Token with repo scope
+    // GITHUB_OWNER    — your GitHub username
+    // GITHUB_REPO     — your repo name
+    //
+    // For local dev, create a .env file:
+    // PUBLIC_ADMIN_PASSWORD=yourpassword
+    // PUBLIC_GITHUB_TOKEN=ghp_xxx
+    // PUBLIC_GITHUB_OWNER=utsabdangol
+    // PUBLIC_GITHUB_REPO=portfolio
+
+    const CFG = {
+      password: import.meta.env.PUBLIC_ADMIN_PASSWORD || '',
+      token:    import.meta.env.PUBLIC_GITHUB_TOKEN || '',
+      owner:    import.meta.env.PUBLIC_GITHUB_OWNER || 'utsabdangol',
+      repo:     import.meta.env.PUBLIC_GITHUB_REPO || 'portfolio',
+      file:     'src/content.json',
+    };
+
+    // ─── STATE ────────────────────────────────────────────────
+    let state = {
+      authed: false,
+      password: '',
+      content: null,
+      status: null,
+      sha: null,
+    };
+
+    // ─── RENDER ───────────────────────────────────────────────
+    function render() {
+      const root = document.getElementById('root');
+      if (!state.authed) {
+        root.innerHTML = loginUI();
+      } else {
+        root.innerHTML = adminUI();
+        bindAdminEvents();
+      }
+    }
+
+    function loginUI() {
+      return `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+          <div style="width:100%;max-width:340px;">
+            <p style="font-family:'DM Mono',monospace;font-size:11px;color:#6b6b6b;letter-spacing:0.15em;margin-bottom:20px;">ADMIN / utsabdangol.com.np</p>
+            <div style="margin-bottom:12px;">
+              <label class="label">Password</label>
+              <input type="password" id="pw" placeholder="enter password" onkeydown="if(event.key==='Enter')window._login()" />
+            </div>
+            <button class="btn-primary" style="width:100%" onclick="window._login()">unlock</button>
+            ${state.status ? `<div class="status error">${state.status}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function adminUI() {
+      if (!state.content) return `<div style="color:#6b6b6b;padding:40px;font-family:'DM Mono',monospace;font-size:13px;">loading content...</div>`;
+      const c = state.content;
+      return `
+        <div style="padding: 40px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;">
+            <div>
+              <h1>Admin panel</h1>
+              <p style="font-family:'DM Mono',monospace;font-size:11px;color:#6b6b6b;margin-top:4px;">utsabdangol.com.np</p>
+            </div>
+            <button class="btn-danger" onclick="window._logout()">logout</button>
+          </div>
+
+          <!-- Bio -->
+          <div class="section">
+            <h2>Bio</h2>
+            <div style="margin-bottom:12px;">
+              <label class="label">Short bio (hero)</label>
+              <input id="shortBio" value="${esc(c.shortBio)}" />
+            </div>
+            <div>
+              <label class="label">Full bio (about section)</label>
+              <textarea id="bio">${esc(c.bio)}</textarea>
+            </div>
+          </div>
+
+          <!-- Projects -->
+          <div class="section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <h2 style="margin-bottom:0">Projects</h2>
+              <button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="window._addProject()">+ add</button>
+            </div>
+            <div id="projects-list">
+              ${c.projects.map((p, i) => projectCard(p, i)).join('')}
+            </div>
+          </div>
+
+          <!-- Save -->
+          <button class="btn-primary" style="width:100%;padding:14px;" onclick="window._save()">
+            save &amp; deploy
+          </button>
+          ${state.status ? `<div class="status ${state.statusType}">${state.status}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function projectCard(p, i) {
+      return `
+        <div class="card" id="proj-${i}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <span style="font-family:'DM Mono',monospace;font-size:11px;color:#6b6b6b;">project ${i + 1}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#6b6b6b;cursor:pointer;">
+                <input type="checkbox" ${p.featured ? 'checked' : ''} data-proj="${i}" data-field="featured" style="width:auto;accent-color:#e8ff6b;" />
+                featured
+              </label>
+              <button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="window._removeProject(${i})">remove</button>
+            </div>
+          </div>
+          <div class="grid2" style="margin-bottom:10px;">
+            <div>
+              <label class="label">Title</label>
+              <input data-proj="${i}" data-field="title" value="${esc(p.title)}" />
+            </div>
+            <div>
+              <label class="label">GitHub / URL</label>
+              <input data-proj="${i}" data-field="url" value="${esc(p.url)}" />
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label class="label">Description</label>
+            <textarea data-proj="${i}" data-field="description">${esc(p.description)}</textarea>
+          </div>
+          <div>
+            <label class="label">Tags (comma-separated)</label>
+            <input data-proj="${i}" data-field="tags" value="${p.tags.join(', ')}" />
+          </div>
+        </div>
+      `;
+    }
+
+    function esc(s) { return String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+    // ─── EVENTS ───────────────────────────────────────────────
+    function bindAdminEvents() {}
+
+    window._login = () => {
+      const pw = document.getElementById('pw')?.value;
+      if (pw === CFG.password) {
+        state.authed = true;
+        state.status = null;
+        render();
+        loadContent();
+      } else {
+        state.status = 'incorrect password';
+        render();
+      }
+    };
+
+    window._logout = () => {
+      state.authed = false;
+      state.content = null;
+      state.status = null;
+      render();
+    };
+
+    window._addProject = () => {
+      state.content.projects.push({ title: '', description: '', tags: [], url: '', featured: false });
+      render();
+    };
+
+    window._removeProject = (i) => {
+      state.content.projects.splice(i, 1);
+      render();
+    };
+
+    window._save = async () => {
+      // Collect current form values
+      const c = state.content;
+      c.shortBio = document.getElementById('shortBio').value;
+      c.bio = document.getElementById('bio').value;
+
+      document.querySelectorAll('[data-proj]').forEach(el => {
+        const i = parseInt(el.dataset.proj);
+        const field = el.dataset.field;
+        if (field === 'tags') {
+          c.projects[i].tags = el.value.split(',').map(t => t.trim()).filter(Boolean);
+        } else if (field === 'featured') {
+          c.projects[i].featured = el.checked;
+        } else {
+          c.projects[i][field] = el.value;
+        }
+      });
+
+      state.status = 'saving...';
+      state.statusType = 'loading';
+      render();
+
+      try {
+        const body = JSON.stringify(c, null, 2);
+        const encoded = btoa(unescape(encodeURIComponent(body)));
+        const res = await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${CFG.file}`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `token ${CFG.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: 'chore: update content via admin panel',
+            content: encoded,
+            sha: state.sha,
+          }),
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        state.sha = data.content.sha;
+        state.status = '✓ saved — deploying now (~45 sec)';
+        state.statusType = 'success';
+      } catch (e) {
+        state.status = 'error: ' + e.message;
+        state.statusType = 'error';
+      }
+      render();
+    };
+
+    // ─── LOAD CONTENT FROM GITHUB ─────────────────────────────
+    async function loadContent() {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents/${CFG.file}`, {
+          headers: { Authorization: `token ${CFG.token}` },
+        });
+        const data = await res.json();
+        state.sha = data.sha;
+        state.content = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
+      } catch (e) {
+        state.content = null;
+        state.status = 'could not load content: ' + e.message;
+        state.statusType = 'error';
+      }
+      render();
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
